@@ -1,0 +1,95 @@
+# =============================================================================
+# resources/pipeline.job.yml
+# Job rotaperfume_pipeline.
+#
+# DESENHO ATUAL (prompt 03 — silver):
+#   raw_conferencia
+#     └── bronze_ingestao
+#           ├── silver_clientes         (paralelo)
+#           ├── silver_pedidos          (paralelo)
+#           ├── silver_itens_produtos   (paralelo)
+#           └── silver_crm_financeiro   (paralelo)
+#
+# DESENHO FUTURO (prompts 04 → 06):
+#   raw_conferencia
+#     └── bronze_ingestao
+#           ├── silver_clientes         (paralelo)
+#           ├── silver_pedidos          (paralelo)
+#           ├── silver_itens_produtos   (paralelo)
+#           └── silver_crm_financeiro   (paralelo)
+#                  └── gold_carga
+#                        ├── qualidade_check
+#                        └── dashboard_refresh
+# =============================================================================
+
+resources:
+  jobs:
+    rotaperfume_pipeline:
+      name: rotaperfume_pipeline
+      description: "Pipeline completo do catálogo rotaperfume — cresce a cada prompt da noite 2."
+
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?"
+        timezone_id: "America/Sao_Paulo"
+        pause_status: PAUSED
+
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+
+      tasks:
+        - task_key: raw_conferencia
+          description: "Conferência de chegada — valida que os 10 CSVs estão no Volume."
+          notebook_task:
+            notebook_path: src/raw/conferencia.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+        - task_key: bronze_ingestao
+          description: "Ingestão bronze — lê 10 CSVs como string, grava 10 tabelas Delta."
+          depends_on:
+            - task_key: raw_conferencia
+          notebook_task:
+            notebook_path: src/bronze/ingestao.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+        - task_key: silver_clientes
+          description: "Silver.clientes — CNPJ normalizado a 14 dígitos, dedup, contrato."
+          depends_on:
+            - task_key: bronze_ingestao
+          notebook_task:
+            notebook_path: src/silver/01-clientes.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+        - task_key: silver_pedidos
+          description: "Silver.pedidos — datas tipadas, valor_total DECIMAL, cancelado boolean, valor_liquido."
+          depends_on:
+            - task_key: bronze_ingestao
+          notebook_task:
+            notebook_path: src/silver/02-pedidos.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+        - task_key: silver_itens_produtos
+          description: "Silver.itens_pedido + produtos — devolução marcada, sku_descontinuado."
+          depends_on:
+            - task_key: bronze_ingestao
+          notebook_task:
+            notebook_path: src/silver/03-itens-e-produtos.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+        - task_key: silver_crm_financeiro
+          description: "Silver vendedores, carteira, oportunidades, visitas, pagamentos, estoque."
+          depends_on:
+            - task_key: bronze_ingestao
+          notebook_task:
+            notebook_path: src/silver/04-crm-e-financeiro.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+      tags:
+        projeto: rotaperfume
+        aula: "engenharia-de-dados"

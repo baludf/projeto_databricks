@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+.idea/
+.vscode/
+
+# Databricks
+.databricks/
+*.dbc
+
+# Outputs locais de build
+dist/
+build/
+*.egg-info/
