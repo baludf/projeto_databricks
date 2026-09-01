@@ -2,24 +2,21 @@
 # resources/pipeline.job.yml
 # Job rotaperfume_pipeline.
 #
-# DESENHO ATUAL (prompt 03 — silver):
+# DESENHO ATUAL (prompt 04 — gold):
 #   raw_conferencia
 #     └── bronze_ingestao
 #           ├── silver_clientes         (paralelo)
 #           ├── silver_pedidos          (paralelo)
 #           ├── silver_itens_produtos   (paralelo)
 #           └── silver_crm_financeiro   (paralelo)
+#                  └── gold_dimensoes
+#                        └── gold_fato_vendas
+#                              └── gold_marts
+#                                    └── testes
 #
-# DESENHO FUTURO (prompts 04 → 06):
-#   raw_conferencia
-#     └── bronze_ingestao
-#           ├── silver_clientes         (paralelo)
-#           ├── silver_pedidos          (paralelo)
-#           ├── silver_itens_produtos   (paralelo)
-#           └── silver_crm_financeiro   (paralelo)
-#                  └── gold_carga
-#                        ├── qualidade_check
-#                        └── dashboard_refresh
+# DESENHO FUTURO (prompts 05 → 06):
+#   ... teste
+#         └── dashboard_refresh
 # =============================================================================
 
 resources:
@@ -41,7 +38,7 @@ resources:
         - task_key: raw_conferencia
           description: "Conferência de chegada — valida que os 10 CSVs estão no Volume."
           notebook_task:
-            notebook_path: src/raw/conferencia.py
+            notebook_path: ../src/raw/conferencia.py
             base_parameters:
               catalog: ${var.catalog}
 
@@ -50,7 +47,7 @@ resources:
           depends_on:
             - task_key: raw_conferencia
           notebook_task:
-            notebook_path: src/bronze/ingestao.py
+            notebook_path: ../src/bronze/ingestao.py
             base_parameters:
               catalog: ${var.catalog}
 
@@ -59,7 +56,7 @@ resources:
           depends_on:
             - task_key: bronze_ingestao
           notebook_task:
-            notebook_path: src/silver/01-clientes.py
+            notebook_path: ../src/silver/01-clientes.py
             base_parameters:
               catalog: ${var.catalog}
 
@@ -68,7 +65,7 @@ resources:
           depends_on:
             - task_key: bronze_ingestao
           notebook_task:
-            notebook_path: src/silver/02-pedidos.py
+            notebook_path: ../src/silver/02-pedidos.py
             base_parameters:
               catalog: ${var.catalog}
 
@@ -77,7 +74,7 @@ resources:
           depends_on:
             - task_key: bronze_ingestao
           notebook_task:
-            notebook_path: src/silver/03-itens-e-produtos.py
+            notebook_path: ../src/silver/03-itens-e-produtos.py
             base_parameters:
               catalog: ${var.catalog}
 
@@ -86,7 +83,46 @@ resources:
           depends_on:
             - task_key: bronze_ingestao
           notebook_task:
-            notebook_path: src/silver/04-crm-e-financeiro.py
+            notebook_path: ../src/silver/04-crm-e-financeiro.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+        - task_key: gold_dimensoes
+          description: "Gold — 4 dimensoes conformadas: dim_cliente, dim_produto, dim_vendedor, dim_calendario."
+          depends_on:
+            - task_key: silver_clientes
+            - task_key: silver_pedidos
+            - task_key: silver_itens_produtos
+            - task_key: silver_crm_financeiro
+          notebook_task:
+            notebook_path: ../src/gold/05-dimensoes.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+        - task_key: gold_fato_vendas
+          description: "Gold — fato_vendas: item de pedido, cancelados fora, devolucao com valor negativo."
+          depends_on:
+            - task_key: gold_dimensoes
+          notebook_task:
+            notebook_path: ../src/gold/06-fato-vendas.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+        - task_key: gold_marts
+          description: "Gold — 3 marts: vendedor, produto, financeiro. Todos sobre o mesmo fato."
+          depends_on:
+            - task_key: gold_fato_vendas
+          notebook_task:
+            notebook_path: ../src/gold/07-marts.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+        - task_key: testes
+          description: "Gold — 9 testes de qualidade com raise_error(). Se algum falhar, o job para."
+          depends_on:
+            - task_key: gold_marts
+          notebook_task:
+            notebook_path: ../src/gold/08-testes.py
             base_parameters:
               catalog: ${var.catalog}
 
