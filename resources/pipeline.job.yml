@@ -2,7 +2,7 @@
 # resources/pipeline.job.yml
 # Job rotaperfume_pipeline.
 #
-# DESENHO ATUAL (prompt 04 — gold):
+# DESENHO ATUAL (prompt 05 — dashboard):
 #   raw_conferencia
 #     └── bronze_ingestao
 #           ├── silver_clientes         (paralelo)
@@ -13,10 +13,7 @@
 #                        └── gold_fato_vendas
 #                              └── gold_marts
 #                                    └── testes
-#
-# DESENHO FUTURO (prompts 05 → 06):
-#   ... teste
-#         └── dashboard_refresh
+#                                          └── dashboard_refresh
 # =============================================================================
 
 resources:
@@ -125,6 +122,11 @@ resources:
             notebook_path: ../src/gold/08-testes.py
             base_parameters:
               catalog: ${var.catalog}
+
+        - task_key: dashboard_refresh
+          description: "Dashboard comercial AI/BI — atualiza datasets e publica no workspace."
+          depends_on:
+            - task_key: testes
 
       tags:
         projeto: rotaperfume

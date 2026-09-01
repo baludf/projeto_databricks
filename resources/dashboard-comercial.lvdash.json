@@ -1,0 +1,472 @@
+{
+  "datasets": [
+    {
+      "name": "fato_vendas_filtrado",
+      "displayName": "fato_vendas_filtrado",
+      "queryLines": [
+        "SELECT\n",
+        "  CAST(data_pedido AS DATE) AS data_pedido,\n",
+        "  CAST(ano AS INT) AS ano,\n",
+        "  CAST(mes AS INT) AS mes,\n",
+        "  canal,\n",
+        "  CAST(pedido_id AS INT) AS pedido_id,\n",
+        "  CAST(vendedor_id AS INT) AS vendedor_id,\n",
+        "  CAST(cliente_id AS INT) AS cliente_id,\n",
+        "  razao_social,\n",
+        "  segmento,\n",
+        "  cidade,\n",
+        "  uf,\n",
+        "  sku,\n",
+        "  categoria,\n",
+        "  marca,\n",
+        "  nota_olfativa,\n",
+        "  CAST(quantidade AS INT) AS quantidade,\n",
+        "  CAST(preco_praticado AS DOUBLE) AS preco_praticado,\n",
+        "  CAST(receita AS DOUBLE) AS receita,\n",
+        "  CAST(custo AS DOUBLE) AS custo,\n",
+        "  CAST(margem AS DOUBLE) AS margem,\n",
+        "  devolucao,\n",
+        "  CONCAT(LPAD(CAST(ano AS STRING), 4, '0'), '-', LPAD(CAST(mes AS STRING), 2, '0'), '-01') AS ano_mes_date\n",
+        "FROM lakehouse_rotaperfume.gold.fato_vendas\n",
+        "WHERE NOT devolucao\n"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "visao_geral",
+      "displayName": "Visao Geral",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {
+            "name": "kpi_receita_total",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "fato_vendas_filtrado",
+                  "fields": [
+                    {"name": "receita", "expression": "SUM(`receita`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "widgetType": "counter",
+              "version": 2,
+              "encodings": {
+                "value": {
+                  "fieldName": "receita",
+                  "displayName": "Receita Total",
+                  "format": {"type": "number-currency", "currencyCode": "BRL", "abbreviation": "compact", "decimalPlaces": {"type": "max", "places": 2}}
+                }
+              },
+              "frame": {
+                "title": "Receita Total",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {"x": 0, "y": 0, "width": 3, "height": 4}
+        },
+        {
+          "widget": {
+            "name": "kpi_margem_total",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "fato_vendas_filtrado",
+                  "fields": [
+                    {"name": "margem", "expression": "SUM(`margem`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "widgetType": "counter",
+              "version": 2,
+              "encodings": {
+                "value": {
+                  "fieldName": "margem",
+                  "displayName": "Margem Total",
+                  "format": {"type": "number-currency", "currencyCode": "BRL", "abbreviation": "compact", "decimalPlaces": {"type": "max", "places": 2}}
+                }
+              },
+              "frame": {
+                "title": "Margem Total",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {"x": 3, "y": 0, "width": 3, "height": 4}
+        },
+        {
+          "widget": {
+            "name": "kpi_pedidos",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "fato_vendas_filtrado",
+                  "fields": [
+                    {"name": "pedidos", "expression": "COUNT(DISTINCT `pedido_id`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "widgetType": "counter",
+              "version": 2,
+              "encodings": {
+                "value": {
+                  "fieldName": "pedidos",
+                  "displayName": "Pedidos",
+                  "format": {"type": "number", "abbreviation": "compact", "decimalPlaces": {"type": "max", "places": 0}}
+                }
+              },
+              "frame": {
+                "title": "Pedidos (unicos)",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {"x": 6, "y": 0, "width": 3, "height": 4}
+        },
+        {
+          "widget": {
+            "name": "kpi_ticket_medio",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "fato_vendas_filtrado",
+                  "fields": [
+                    {"name": "ticket", "expression": "SUM(`receita`) / COUNT(DISTINCT `pedido_id`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "widgetType": "counter",
+              "version": 2,
+              "encodings": {
+                "value": {
+                  "fieldName": "ticket",
+                  "displayName": "Ticket Medio",
+                  "format": {"type": "number-currency", "currencyCode": "BRL", "abbreviation": "compact", "decimalPlaces": {"type": "max", "places": 2}}
+                }
+              },
+              "frame": {
+                "title": "Ticket Medio",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {"x": 9, "y": 0, "width": 3, "height": 4}
+        },
+        {
+          "widget": {
+            "name": "linha_receita_mes",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "fato_vendas_filtrado",
+                  "fields": [
+                    {"name": "ano_mes_date", "expression": "`ano_mes_date`"},
+                    {"name": "receita", "expression": "SUM(`receita`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "widgetType": "line",
+              "version": 3,
+              "encodings": {
+                "x": {
+                  "fieldName": "ano_mes_date",
+                  "scale": {"type": "temporal"}
+                },
+                "y": {
+                  "fieldName": "receita",
+                  "scale": {"type": "quantitative"}
+                }
+              },
+              "frame": {
+                "title": "Receita por Mes",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {"x": 0, "y": 4, "width": 8, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "barras_receita_canal",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "fato_vendas_filtrado",
+                  "fields": [
+                    {"name": "canal", "expression": "`canal`"},
+                    {"name": "receita", "expression": "SUM(`receita`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "widgetType": "bar",
+              "version": 3,
+              "encodings": {
+                "x": {
+                  "fieldName": "receita",
+                  "scale": {"type": "quantitative"}
+                },
+                "y": {
+                  "fieldName": "canal",
+                  "scale": {"type": "categorical"}
+                }
+              },
+              "frame": {
+                "title": "Receita por Canal",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {"x": 8, "y": 4, "width": 4, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "barras_margem_categoria",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "fato_vendas_filtrado",
+                  "fields": [
+                    {"name": "categoria", "expression": "`categoria`"},
+                    {"name": "margem_pct", "expression": "100 * SUM(`margem`) / SUM(`receita`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "widgetType": "bar",
+              "version": 3,
+              "encodings": {
+                "x": {
+                  "fieldName": "margem_pct",
+                  "scale": {"type": "quantitative"}
+                },
+                "y": {
+                  "fieldName": "categoria",
+                  "scale": {"type": "categorical"},
+                  "sort": {"direction": "ASC", "by": {"expr": "100 * SUM(`margem`) / SUM(`receita`)"}}
+                }
+              },
+              "frame": {
+                "title": "Margem % por Categoria",
+                "showTitle": true,
+                "description": "Categorias com menor margem aparecem na esquerda."
+              }
+            }
+          },
+          "position": {"x": 0, "y": 10, "width": 6, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "barras_top10_marcas",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "fato_vendas_filtrado",
+                  "fields": [
+                    {"name": "marca", "expression": "`marca`"},
+                    {"name": "receita", "expression": "SUM(`receita`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "widgetType": "bar",
+              "version": 3,
+              "encodings": {
+                "x": {
+                  "fieldName": "receita",
+                  "scale": {"type": "quantitative"}
+                },
+                "y": {
+                  "fieldName": "marca",
+                  "scale": {"type": "categorical"},
+                  "sort": {"direction": "DESC", "by": {"expr": "SUM(`receita`)"}},
+                  "limit": 10
+                }
+              },
+              "frame": {
+                "title": "Top 10 Marcas por Receita",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {"x": 6, "y": 10, "width": 6, "height": 6}
+        },
+        {
+          "widget": {
+            "name": "tabela_top20_clientes",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "fato_vendas_filtrado",
+                  "fields": [
+                    {"name": "razao_social", "expression": "`razao_social`"},
+                    {"name": "segmento", "expression": "`segmento`"},
+                    {"name": "cidade", "expression": "`cidade`"},
+                    {"name": "uf", "expression": "`uf`"},
+                    {"name": "receita", "expression": "SUM(`receita`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "widgetType": "table",
+              "version": 2,
+              "encodings": {
+                "columns": [
+                  {"fieldName": "razao_social", "displayName": "Razao Social"},
+                  {"fieldName": "segmento", "displayName": "Segmento"},
+                  {"fieldName": "cidade", "displayName": "Cidade"},
+                  {"fieldName": "uf", "displayName": "UF"},
+                  {"fieldName": "receita", "displayName": "Receita", "format": {"type": "number-currency", "currencyCode": "BRL", "abbreviation": "compact", "decimalPlaces": {"type": "max", "places": 2}}}
+                ]
+              },
+              "frame": {
+                "title": "Top 20 Clientes por Receita",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {"x": 0, "y": 16, "width": 12, "height": 8}
+        },
+        {
+          "widget": {
+            "name": "filtro_ano",
+            "queries": [
+              {
+                "name": "filtro_ano_ds",
+                "query": {
+                  "datasetName": "fato_vendas_filtrado",
+                  "fields": [
+                    {"name": "ano", "expression": "`ano`"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "widgetType": "filter-single-select",
+              "version": 2,
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "ano",
+                    "displayName": "Ano",
+                    "queryName": "filtro_ano_ds"
+                  }
+                ]
+              },
+              "frame": {
+                "title": "Ano",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {"x": 0, "y": 24, "width": 4, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "filtro_segmento",
+            "queries": [
+              {
+                "name": "filtro_segmento_ds",
+                "query": {
+                  "datasetName": "fato_vendas_filtrado",
+                  "fields": [
+                    {"name": "segmento", "expression": "`segmento`"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "widgetType": "filter-multi-select",
+              "version": 2,
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "segmento",
+                    "displayName": "Segmento",
+                    "queryName": "filtro_segmento_ds"
+                  }
+                ]
+              },
+              "frame": {
+                "title": "Segmento",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {"x": 4, "y": 24, "width": 4, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "filtro_cidade",
+            "queries": [
+              {
+                "name": "filtro_cidade_ds",
+                "query": {
+                  "datasetName": "fato_vendas_filtrado",
+                  "fields": [
+                    {"name": "cidade", "expression": "`cidade`"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "widgetType": "filter-multi-select",
+              "version": 2,
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "cidade",
+                    "displayName": "Cidade",
+                    "queryName": "filtro_cidade_ds"
+                  }
+                ]
+              },
+              "frame": {
+                "title": "Cidade",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {"x": 8, "y": 24, "width": 4, "height": 3}
+        }
+      ]
+    }
+  ]
+}

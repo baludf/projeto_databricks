@@ -1,0 +1,15 @@
+# =============================================================================
+# resources/dashboard.dashboard.yml
+# Dashboard comercial AI/BI — declarado como recurso do bundle para que
+# suba junto com o deploy e tenha diff/rollback via git.
+# =============================================================================
+
+resources:
+  dashboards:
+    dashboard_comercial:
+      display_name: "Comercial — Rota Perfume"
+      warehouse_id: ${var.warehouse_id}
+      file_path: ../resources/dashboard-comercial.lvdash.json
+      embed_credentials: false
+      dataset_catalog: ${var.catalog}
+      dataset_schema: gold
