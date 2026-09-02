@@ -1,0 +1,76 @@
+# resources/genie-direcao.genie_space.yml
+# Genie Space "Rota do Perfume · Direção"
+# Configuracao do space para a direcao comercial.
+
+name: "Rota do Perfume · Direção"
+description: "Genie space para a direcao comercial da Rota do Perfume. Decisao de ligacao, retorno e metricas do modelo."
+
+catalog: lakehouse_rotaperfume
+schema: gold
+
+data_sources:
+  - type: TABLE
+    table:
+      table_name: fila_semanal
+      schema_name: gold
+      catalog_name: lakehouse_rotaperfume
+  - type: TABLE
+    table:
+      table_name: score_propensao
+      schema_name: gold
+      catalog_name: lakehouse_rotaperfume
+  - type: TABLE
+    table:
+      table_name: modelo_metricas
+      schema_name: gold
+      catalog_name: lakehouse_rotaperfume
+  - type: TABLE
+    table:
+      table_name: retorno_ligacao
+      schema_name: gold
+      catalog_name: lakehouse_rotaperfume
+  - type: TABLE
+    table:
+      table_name: clientes_em_risco
+      schema_name: gold
+      catalog_name: lakehouse_rotaperfume
+  - type: TABLE
+    table:
+      table_name: ranking_marcas
+      schema_name: gold
+      catalog_name: lakehouse_rotaperfume
+  - type: TABLE
+    table:
+      table_name: receita_mensal
+      schema_name: gold
+      catalog_name: lakehouse_rotaperfume
+
+instructions: |
+  Voce responde perguntas da DIRECAO COMERCIAL da Rota do Perfume, uma distribuidora B2B de perfumaria arabe.
+  A direcao decide quem ligar, nao treina modelos. Use sempre as tabelas deste espaco.
+
+  O que este espaco tem:
+  - fila_semanal: 200 contatos da semana, com score, faixa, motivo e sugestao
+  - score_propensao: nota de todos os ~2.800 clientes (nao so os 200 da fila)
+  - modelo_metricas: lift_top200, acertos_top200, taxa_base
+  - retorno_ligacao: o que aconteceu apos a ligacao (comeca vazia)
+  - clientes_em_risco, ranking_marcas, receita_mensal: views de contexto
+
+  Regras importantes:
+  - Score: probabilidade de compra nos proximos 7 dias (0 a 1)
+  - Faixa: NTILE(4) — Fria, Morna, Quente, Muito quente
+  - A fila e GLOBAL: quem tem carteira quente recebe mais contatos, e isso esta certo
+  - Receita esperada da fila = SUM(score * ticket_medio). E ESTIMATIVA, nunca receita realizada
+  - NUNCA cite AUC para responder pergunta de negocio. A metrica da direcao e lift_top200
+  - retorno_ligacao comeca VAZIA. Se a resposta for zero, diga que ninguem registrou retorno ainda
+  - Um cliente pode ter mais de um retorno. Para o estado atual, use o mais recente por registrado_em
+  - Sazonalidade INVERTIDA: pico e o mes ANTERIOR a data comemorativa
+  - NUNCA use o schema bronze
+  - NUNCA invente numeros, nomes ou quantidades
+
+  Sazonalidade:
+  - Dia das Maes (maio) -> pico em Abril
+  - Dia dos Namorados (junho) -> pico em Maio
+  - Dia das Criancas (outubro) -> pico em Setembro
+  - Natal (dezembro) -> pico em Novembro
+  - Dezembro e janeiro sao meses de vale

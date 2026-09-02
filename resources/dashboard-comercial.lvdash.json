@@ -30,6 +30,25 @@
         "FROM lakehouse_rotaperfume.gold.fato_vendas\n",
         "WHERE NOT devolucao\n"
       ]
+    },
+    {
+      "name": "fila_semanal",
+      "displayName": "fila_semanal",
+      "queryLines": [
+        "SELECT\n",
+        "  vendedor,\n",
+        "  CAST(ordem AS INT) AS ordem,\n",
+        "  CAST(cliente_id AS INT) AS cliente_id,\n",
+        "  razao_social,\n",
+        "  cidade,\n",
+        "  uf,\n",
+        "  ROUND(score, 2) AS score,\n",
+        "  faixa,\n",
+        "  ROUND(ticket_medio, 2) AS ticket_medio,\n",
+        "  motivo,\n",
+        "  sugestao\n",
+        "FROM lakehouse_rotaperfume.gold.fila_semanal\n"
+      ]
     }
   ],
   "pages": [
@@ -465,6 +484,93 @@
             }
           },
           "position": {"x": 8, "y": 24, "width": 4, "height": 3}
+        }
+      ]
+    },
+    {
+      "name": "fila_da_semana",
+      "displayName": "Fila da semana",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {
+            "name": "filtro_vendedor",
+            "queries": [
+              {
+                "name": "filtro_vendedor_ds",
+                "query": {
+                  "datasetName": "fila_semanal",
+                  "fields": [
+                    {"name": "vendedor", "expression": "`vendedor`"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "widgetType": "filter-single-select",
+              "version": 2,
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "vendedor",
+                    "displayName": "Vendedor",
+                    "queryName": "filtro_vendedor_ds"
+                  }
+                ]
+              },
+              "frame": {
+                "title": "Vendedor",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {"x": 0, "y": 0, "width": 4, "height": 3}
+        },
+        {
+          "widget": {
+            "name": "tabela_fila",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "fila_semanal",
+                  "fields": [
+                    {"name": "ordem", "expression": "`ordem`"},
+                    {"name": "razao_social", "expression": "`razao_social`"},
+                    {"name": "cidade", "expression": "`cidade`"},
+                    {"name": "uf", "expression": "`uf`"},
+                    {"name": "score", "expression": "`score`"},
+                    {"name": "faixa", "expression": "`faixa`"},
+                    {"name": "motivo", "expression": "`motivo`"},
+                    {"name": "sugestao", "expression": "`sugestao`"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "widgetType": "table",
+              "version": 2,
+              "encodings": {
+                "columns": [
+                  {"fieldName": "ordem", "displayName": "#"},
+                  {"fieldName": "razao_social", "displayName": "Cliente"},
+                  {"fieldName": "cidade", "displayName": "Cidade"},
+                  {"fieldName": "uf", "displayName": "UF"},
+                  {"fieldName": "score", "displayName": "Nota", "format": {"type": "number", "decimalPlaces": {"type": "max", "places": 2}}},
+                  {"fieldName": "faixa", "displayName": "Faixa"},
+                  {"fieldName": "motivo", "displayName": "Motivo"},
+                  {"fieldName": "sugestao", "displayName": "Sugestao"}
+                ]
+              },
+              "frame": {
+                "title": "Fila da Semana — 200 contatos",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {"x": 0, "y": 3, "width": 12, "height": 12}
         }
       ]
     }

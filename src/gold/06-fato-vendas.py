@@ -69,13 +69,28 @@ WHERE NOT p.cancelado
 
 # COMMENTs — significado de NEGOCIO, nao o tecnico
 spark.sql(f"COMMENT ON TABLE  {CATALOG}.gold.fato_vendas IS 'Fato de vendas — grão item de pedido. Exclui cancelados. Devolucao entra com valor negativo e flag. Particionado por ano/mes. Receita = quantidade * preco_praticado. Margem = receita - custo.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.data_pedido IS 'Data do pedido. Usada para filtrar por periodo e calcular recencia.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.ano IS 'Ano do pedido. Particao da tabela.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.mes IS 'Mes do pedido (1-12). Particao da tabela.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.canal IS 'Canal de venda (ex: Representantes, E-commerce). Atributo do pedido, nao do item — repetido por item para evitar JOIN no consumo.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.pedido_id IS 'Identificador unico do pedido. Um pedido pode conter varios itens (SKUs).'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.vendedor_id IS 'Identificador do vendedor responsavel pelo pedido.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.cliente_id IS 'Identificador unico do cliente que fez o pedido.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.razao_social IS 'Nome oficial do cliente (razao social). Vem de silver.clientes.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.segmento IS 'Segmento do cliente (ex: Atacado, Varejo). COALESCE com Nao informado se ausente.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.cidade IS 'Cidade do cliente. COALESCE com Nao informada se ausente.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.uf IS 'Unidade federativa (estado) do cliente. COALESCE com N/A se ausente.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.sku IS 'Codigo unico do produto (SKU). Chave para joins com dim_produto.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.categoria IS 'Categoria do produto (ex: Perfumaria, Cosmetico). Vem de dim_produto.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.marca IS 'Marca do produto. Vem de dim_produto.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.nota_olfativa IS 'Nota olfativa do produto (ex: floral, amadeirado). Vem de dim_produto.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.quantidade IS 'Quantidade do item no pedido. Positivo para venda, negativo para devolucao.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.preco_praticado IS 'Preco unitario real transacionado (pode diferir do preco de tabela por desconto). NUNCA multiplicar pela quantidade absoluta.'")
 spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.receita IS 'Receita = quantidade * preco_praticado. Negativa para devolucoes. Nao desconta impostos nem frete (politica do contrato).'")
 spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.custo IS 'Custo = quantidade * custo_unitario. Usa ABS no custo para que devolucoes nao gerem custo credito — devolucao e devolucao de receita, nao de custo.'")
 spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.margem IS 'Receita menos custo do produto. NAO considera desconto comercial nem frete. A regra de margem vive aqui — quem pedir margem nao reinventa a conta.'")
-spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.quantidade IS 'Quantidade do item no pedido. Positivo para venda, negativo para devolucao.'")
-spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.preco_praticado IS 'Preco unitario real transacionado (pode diferir do preco de tabela por desconto). NUNCA multiplicar pela quantidade absoluta.'")
 spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.devolucao IS 'TRUE para itens devolvidos. Receita e quantidade serao negativas. Para o bruto vendido: SUM(receita) FILTER (WHERE NOT devolucao).'")
-spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas.canal IS 'Canal de venda (ex: Representantes, E-commerce). Atributo do pedido, nao do item — repetido por item para evitar JOIN no consumo.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.fato_vendas._processado_em IS 'Timestamp de processamento do registro. Gerado automaticamente no INSERT.'")
 
 # Resumo
 df_resumo = spark.sql(f"""

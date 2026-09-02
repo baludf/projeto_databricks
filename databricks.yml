@@ -7,6 +7,10 @@ bundle:
 include:
   - resources/*.yml
 
+sync:
+  include:
+    - src/ml/**
+
 # O pipeline de notebooks não precisa de wheel Python. O package
 # rotaperfume será adicionado futuramente quando houver tasks
 # python_wheel_task (prompt 01 só usa notebook_task).

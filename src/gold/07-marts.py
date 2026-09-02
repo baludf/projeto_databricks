@@ -51,9 +51,23 @@ LEFT JOIN {CATALOG}.gold.dim_vendedor v
 """)
 
 spark.sql(f"COMMENT ON TABLE  {CATALOG}.gold.mart_vendas_por_vendedor IS 'Mart Comercial — grão vendedor x mes. Receita exclui devolucao. ticket_medio = receita/pedidos. meta_mensal vem do cadastro.'")
-spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.ticket_medio IS 'Receita dividida por numero de PEDIDOS, nao de itens. 1 pedido com 5 itens = 1 ticket.'")
-spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.atingimento_meta_pct IS 'receita / meta_mensal * 100. NULL se vendedor nao tem meta. 100% = bateu a meta.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.vendedor_id IS 'Identificador do vendedor.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.vendedor_nome IS 'Nome do vendedor.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.regiao IS 'Regiao de atuacao do vendedor.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.uf IS 'Unidade federativa de atuacao do vendedor.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.vendedor_ativo IS 'TRUE se vendedor nao foi desligado.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.ano IS 'Ano de referencia.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.mes IS 'Mes de referencia (1-12).'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.pedidos IS 'Quantidade de pedidos distintos no mes (exclui devolucao).'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.clientes_atendidos IS 'Quantidade de clientes distintos atendidos no mes.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.itens_vendidos IS 'Soma de quantidade de itens vendidos no mes.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.receita IS 'Soma da receita no mes (exclui devolucao).'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.margem IS 'Soma da margem no mes (exclui devolucao).'")
 spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.margem_pct IS 'margem / receita * 100. Em branco quando receita = 0 no mes.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.ticket_medio IS 'Receita dividida por numero de PEDIDOS, nao de itens. 1 pedido com 5 itens = 1 ticket.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.meta_mensal IS 'Meta mensal em R$ do vendedor. NULL se nunca teve meta.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor.atingimento_meta_pct IS 'receita / meta_mensal * 100. NULL se vendedor nao tem meta. 100% = bateu a meta.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_vendas_por_vendedor._processado_em IS 'Timestamp de processamento do registro.'")
 
 # =============================================================================
 # mart_produto_performance — Diretoria de Produto
@@ -110,9 +124,19 @@ LEFT JOIN {CATALOG}.gold.dim_produto pr ON pr.sku = b.sku
 """)
 
 spark.sql(f"COMMENT ON TABLE  {CATALOG}.gold.mart_produto_performance IS 'Mart de Produto — grão SKU x mes. Inclui devolucao (produto quer o saldo liquido). curva_abc classifica no horizonte completo.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_produto_performance.sku IS 'Codigo unico do produto (SKU).'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_produto_performance.produto_nome IS 'Nome descritivo do produto.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_produto_performance.marca IS 'Marca do produto.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_produto_performance.categoria IS 'Categoria do produto.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_produto_performance.ano IS 'Ano de referencia.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_produto_performance.mes IS 'Mes de referencia (1-12).'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_produto_performance.quantidade IS 'Quantidade de itens vendidos (inclui devolucao negativa).'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_produto_performance.receita IS 'Receita do SKU no mes (inclui devolucao negativa).'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_produto_performance.margem IS 'Margem do SKU no mes (inclui devolucao negativa).'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_produto_performance.margem_pct IS 'margem / receita * 100. Em branco quando receita = 0 no mes.'")
 spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_produto_performance.curva_abc IS 'A = 80% da receita acumulada · B = 80% a 95% · C = restante. Calculada na vida inteira do SKU.'")
 spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_produto_performance.rank_mes IS 'Ranking do SKU dentro do mes, ordenado por receita. 1 = lider do mes.'")
-spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_produto_performance.margem_pct IS 'margem / receita * 100. Em branco quando receita = 0 no mes.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_produto_performance._processado_em IS 'Timestamp de processamento do registro.'")
 
 # =============================================================================
 # mart_financeiro_recebimento — Diretoria Financeira
@@ -151,10 +175,16 @@ FROM base
 """)
 
 spark.sql(f"COMMENT ON TABLE  {CATALOG}.gold.mart_financeiro_recebimento IS 'Mart Financeiro — grão mes de VENCIMENTO x forma_pagamento. Planejado pelo que vai vencer, nao pelo que ja foi pago.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_financeiro_recebimento.ano IS 'Ano de vencimento do titulo.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_financeiro_recebimento.mes IS 'Mes de vencimento do titulo (1-12).'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_financeiro_recebimento.forma_pagamento IS 'Forma de pagamento (ex: Boleto, Cartao, Pix).'")
 spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_financeiro_recebimento.valor_a_receber IS 'Soma de valor (parcela) com vencimento no mes. E a previsao — independente do status de pagamento.'")
 spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_financeiro_recebimento.recebido IS 'Soma de valor_liquido de pagamentos COM status = Pago e vencimento no mes. Atrasados NAO migram de mes.'")
 spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_financeiro_recebimento.em_aberto IS 'valor_a_receber - recebido. Diferenca entre o que era previsto e o que efetivamente entrou no mes.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_financeiro_recebimento.taxa_adimplencia_pct IS 'recebido / valor_a_receber * 100. Percentual de titulos pagos no mes.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_financeiro_recebimento.custo_taxa IS 'Custo das taxas de cartao/bandeira para os pagamentos recebidos no mes.'")
 spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_financeiro_recebimento.atraso_medio_dias IS 'Media de dias entre data_vencimento e data_pagamento para os PAGOS no mes. NULL se ninguem pagou.'")
+spark.sql(f"COMMENT ON COLUMN {CATALOG}.gold.mart_financeiro_recebimento._processado_em IS 'Timestamp de processamento do registro.'")
 
 # Resumo
 for mart in ["mart_vendas_por_vendedor", "mart_produto_performance", "mart_financeiro_recebimento"]:

@@ -1,0 +1,132 @@
+{
+  "name": "Rota do Perfume · Direção",
+  "description": "Genie space para a direcao comercial da Rota do Perfume. Decisao de ligacao, retorno e metricas do modelo.",
+  "catalog": "lakehouse_rotaperfume",
+  "schema": "gold",
+  "data_sources": {
+    "tables": [
+      {
+        "identifier": "lakehouse_rotaperfume.gold.clientes_em_risco",
+        "column_configs": [
+          {"column_name": "cliente_id"},
+          {"column_name": "razao_social"},
+          {"column_name": "cidade"},
+          {"column_name": "uf"},
+          {"column_name": "segmento"},
+          {"column_name": "ultima_compra"},
+          {"column_name": "dias_sem_comprar"},
+          {"column_name": "total_pedidos"},
+          {"column_name": "receita_total"},
+          {"column_name": "ticket_medio"},
+          {"column_name": "media_mensal_estimada"}
+        ]
+      },
+      {
+        "identifier": "lakehouse_rotaperfume.gold.fila_semanal",
+        "column_configs": [
+          {"column_name": "vendedor"},
+          {"column_name": "ordem"},
+          {"column_name": "cliente_id"},
+          {"column_name": "razao_social"},
+          {"column_name": "cidade"},
+          {"column_name": "uf"},
+          {"column_name": "score"},
+          {"column_name": "faixa"},
+          {"column_name": "ticket_medio"},
+          {"column_name": "motivo"},
+          {"column_name": "sugestao"}
+        ]
+      },
+      {
+        "identifier": "lakehouse_rotaperfume.gold.modelo_metricas",
+        "column_configs": [
+          {"column_name": "versao"},
+          {"column_name": "auc"},
+          {"column_name": "lift_top200"},
+          {"column_name": "acertos_top200"},
+          {"column_name": "taxa_base"},
+          {"column_name": "baseline_recencia"},
+          {"column_name": "baseline_valor"},
+          {"column_name": "baseline_atraso"},
+          {"column_name": "feature_top"},
+          {"column_name": "_treinado_em"}
+        ]
+      },
+      {
+        "identifier": "lakehouse_rotaperfume.gold.ranking_marcas",
+        "column_configs": [
+          {"column_name": "marca"},
+          {"column_name": "pedidos"},
+          {"column_name": "clientes"},
+          {"column_name": "receita"},
+          {"column_name": "margem"},
+          {"column_name": "margem_pct"},
+          {"column_name": "participacao_pct"}
+        ]
+      },
+      {
+        "identifier": "lakehouse_rotaperfume.gold.receita_mensal",
+        "column_configs": [
+          {"column_name": "ano"},
+          {"column_name": "mes"},
+          {"column_name": "ano_mes"},
+          {"column_name": "pedidos"},
+          {"column_name": "clientes_atendidos"},
+          {"column_name": "receita"},
+          {"column_name": "margem"},
+          {"column_name": "margem_pct"},
+          {"column_name": "ticket_medio"},
+          {"column_name": "mes_pico_setor"}
+        ]
+      },
+      {
+        "identifier": "lakehouse_rotaperfume.gold.retorno_ligacao",
+        "column_configs": [
+          {"column_name": "cliente_id"},
+          {"column_name": "vendedor"},
+          {"column_name": "status"},
+          {"column_name": "comentario"},
+          {"column_name": "registrado_em"},
+          {"column_name": "registrado_por"},
+          {"column_name": "_referencia"}
+        ]
+      },
+      {
+        "identifier": "lakehouse_rotaperfume.gold.score_propensao",
+        "column_configs": [
+          {"column_name": "cliente_id"},
+          {"column_name": "score"},
+          {"column_name": "faixa"},
+          {"column_name": "versao"}
+        ]
+      }
+    ]
+  },
+  "sample_questions": [
+    {
+      "id": "f6a7b8c9d0e1f2a3b4c5d6a7b8c9d0e1",
+      "question": "Quem eu ligo essa semana?",
+      "sql": "SELECT vendedor, ordem, razao_social, ROUND(score, 2) AS nota, motivo, sugestao FROM lakehouse_rotaperfume.gold.fila_semanal ORDER BY score DESC LIMIT 20"
+    },
+    {
+      "id": "a7b8c9d0e1f2a3b4c5d6a7b8c9d0e1f2",
+      "question": "Quanto vale a fila desta semana?",
+      "sql": "SELECT ROUND(SUM(score * ticket_medio), 2) AS receita_esperada FROM lakehouse_rotaperfume.gold.fila_semanal"
+    },
+    {
+      "id": "b8c9d0e1f2a3b4c5d6a7b8c9d0e1f2a3",
+      "question": "Quantas ligacoes ja foram registradas e quantas viraram pedido?",
+      "sql": "SELECT COUNT(*) AS total_registros, SUM(CASE WHEN status = 'vendeu' THEN 1 ELSE 0 END) AS venderam FROM lakehouse_rotaperfume.gold.retorno_ligacao"
+    },
+    {
+      "id": "c9d0e1f2a3b4c5d6a7b8c9d0e1f2a3b4",
+      "question": "O modelo e bom?",
+      "sql": "SELECT lift_top200, acertos_top200, ROUND(taxa_base * 100, 2) AS taxa_base_pct FROM lakehouse_rotaperfume.gold.modelo_metricas ORDER BY _treinado_em DESC LIMIT 1"
+    },
+    {
+      "id": "d0e1f2a3b4c5d6a7b8c9d0e1f2a3b4c5",
+      "question": "Quais clientes estao em risco de perda?",
+      "sql": "SELECT razao_social, cidade, dias_sem_comprar, ROUND(ticket_medio, 2) AS ticket_medio FROM lakehouse_rotaperfume.gold.clientes_em_risco ORDER BY dias_sem_comprar DESC LIMIT 10"
+    }
+  ]
+}

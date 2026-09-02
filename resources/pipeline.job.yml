@@ -2,7 +2,7 @@
 # resources/pipeline.job.yml
 # Job rotaperfume_pipeline.
 #
-# DESENHO ATUAL (prompt 05 — dashboard):
+#   DESENHO ATUAL (17 tasks):
 #   raw_conferencia
 #     └── bronze_ingestao
 #           ├── silver_clientes         (paralelo)
@@ -12,15 +12,21 @@
 #                  └── gold_dimensoes
 #                        └── gold_fato_vendas
 #                              └── gold_marts
-#                                    └── testes
-#                                          └── dashboard_refresh
+#                                    ├── metricas_de_negocio
+#                                    │     └── auditoria_de_metadado
+#                                    │           └── testes
+#                                    │                 └── dashboard_refresh
+#                                    ├── gold_retorno_ligacao
+#                                    └── ml_features
+#                                          └── ml_modelo
+#                                                └── ml_fila
 # =============================================================================
 
 resources:
   jobs:
     rotaperfume_pipeline:
       name: rotaperfume_pipeline
-      description: "Pipeline completo do catálogo rotaperfume — cresce a cada prompt da noite 2."
+      description: "Pipeline completo do catálogo rotaperfume — 17 tasks (raw → bronze → silver → gold + ML + fila)."
 
       schedule:
         quartz_cron_expression: "0 0 6 * * ?"
@@ -114,19 +120,79 @@ resources:
             base_parameters:
               catalog: ${var.catalog}
 
+        - task_key: gold_retorno_ligacao
+          description: "Gold — Tabela retorno_ligacao (cria se nao existir). Dado vem do time, nao do pipeline."
+          depends_on:
+            - task_key: gold_marts
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/gold/11-retorno-ligacao.sql
+
+        - task_key: metricas_de_negocio
+          description: "Gold — 6 views de negocio: receita_mensal, ranking_marcas, margem_por_categoria, clientes_em_risco, efeito_lancamento, ruptura_por_marca."
+          depends_on:
+            - task_key: gold_marts
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/gold/09-metricas-negocio.sql
+
+        - task_key: auditoria_de_metadado
+          description: "Gold — Verifica COMMENT em todas as tabelas/colunas da gold. Quebra o job se faltar."
+          depends_on:
+            - task_key: metricas_de_negocio
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/gold/10-auditoria-metadado.sql
+
         - task_key: testes
           description: "Gold — 9 testes de qualidade com raise_error(). Se algum falhar, o job para."
           depends_on:
-            - task_key: gold_marts
+            - task_key: auditoria_de_metadado
           notebook_task:
             notebook_path: ../src/gold/08-testes.py
             base_parameters:
               catalog: ${var.catalog}
 
-        - task_key: dashboard_refresh
-          description: "Dashboard comercial AI/BI — atualiza datasets e publica no workspace."
+        - task_key: ml_features
+          description: "ML — Feature engineering: 20 features por cliente, 4 grupos (RFM, Ritmo, CRM, Mix)."
           depends_on:
             - task_key: testes
+          notebook_task:
+            notebook_path: ../src/ml/11-features.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+        - task_key: ml_modelo
+          description: "ML — Treino HistGradientBoosting, MLflow, score_propensao, metricas."
+          depends_on:
+            - task_key: ml_features
+          notebook_task:
+            notebook_path: ../src/ml/12-modelo.py
+            base_parameters:
+              catalog: ${var.catalog}
+
+        - task_key: ml_fila
+          description: "ML — Fila semanal 200 contatos, 4 funcoes SQL, 3 testes."
+          depends_on:
+            - task_key: ml_modelo
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/ml/13-fila.sql
+
+        - task_key: dashboard_refresh
+          description: "Dashboard comercial AI/BI — verifica que tabelas existem antes de exibir."
+          depends_on:
+            - task_key: testes
+            - task_key: ml_fila
+            - task_key: gold_retorno_ligacao
+          notebook_task:
+            notebook_path: ../src/gold/12-dashboard-refresh.py
+            base_parameters:
+              catalog: ${var.catalog}
 
       tags:
         projeto: rotaperfume
