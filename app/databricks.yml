@@ -1,0 +1,36 @@
+bundle:
+  name: rotaperfume-direcao
+
+variables:
+  sql_warehouse_id:
+    description: SQL Warehouse ID
+
+resources:
+  apps:
+    app:
+      name: "rotaperfume-direcao"
+      description: "A fila dos 200 na tela do diretor"
+      source_code_path: ./
+
+      # Start the app automatically on deploy.
+      lifecycle:
+        started: true
+      # Uncomment to enable on behalf of user API scopes. Available scopes: sql, dashboards.genie, files.files, serving.serving-endpoints
+      # user_api_scopes:
+      #   - sql
+
+      # The resources which this app has access to.
+      resources:
+        - name: sql-warehouse
+          sql_warehouse:
+            id: ${var.sql_warehouse_id}
+            permission: CAN_USE
+
+targets:
+  default:
+    default: true
+    workspace:
+      host: https://dbc-ad7f18c2-8e19.cloud.databricks.com
+
+    variables:
+      sql_warehouse_id: dd1ddc0694a86a8e

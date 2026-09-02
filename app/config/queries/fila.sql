@@ -1,5 +1,6 @@
 -- @desc Fila dos 200 com retorno mais recente
 -- @param vendedor STRING = Todos
+-- @param w INT = 0
 
 SELECT
   f.vendedor,
@@ -23,5 +24,6 @@ LEFT JOIN (
          ROW_NUMBER() OVER (PARTITION BY cliente_id ORDER BY registrado_em DESC) AS _rank
   FROM lakehouse_rotaperfume.gold.retorno_ligacao
 ) r ON r.cliente_id = f.cliente_id AND r._rank = 1
-WHERE ('Todos' = '${vendedor}' OR f.vendedor = '${vendedor}')
+WHERE ('Todos' = :vendedor OR f.vendedor = :vendedor)
+  AND :w >= 0
 ORDER BY f.score DESC
