@@ -40,7 +40,7 @@ WITH elegiveis AS (
    AND c.orfao_vendedor_desligado = false
   JOIN lakehouse_rotaperfume.silver.vendedores v
     ON v.vendedor_id = c.vendedor_id
-   AND v.ativo = true
+   AND v.data_desligamento IS NULL
 ),
 ordenados AS (
   -- 2) Pegar os 200 maiores scores

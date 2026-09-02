@@ -16,6 +16,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.inspection import permutation_importance
 import mlflow
 import mlflow.sklearn
+from mlflow.models import infer_signature
 from databricks.sdk import WorkspaceClient
 
 # COMMAND ----------
@@ -220,32 +221,37 @@ with mlflow.start_run(run_name="propensao_compra_v1"):
     mlflow.log_metric("baseline_valor", auc_valor)
     mlflow.log_metric("baseline_atraso", auc_atraso)
 
-    # Log modelo
+    # Log modelo com signature (obrigatorio para UC)
+    sample_X = X_holdout[:5]
+    sample_pred = modelo.predict_proba(sample_X)[:, 1]
+    signature = infer_signature(sample_X, sample_pred)
+
     mlflow.sklearn.log_model(
         modelo,
         artifact_path="modelo",
         registered_model_name="lakehouse_rotaperfume.gold.propensao_compra",
+        signature=signature,
     )
 
     run_id = mlflow.active_run().info.run_id
     print(f"  Run ID: {run_id}")
 
-# Alias @prod
+# Alias @prod (UC: set_registered_model_alias direto)
 client = mlflow.tracking.MlflowClient()
-model_versions = client.get_latest_versions(
-    "lakehouse_rotaperfume.gold.propensao_compra", stages=["None"]
-)
-if model_versions:
-    latest_version = model_versions[0].version
-    client.set_registered_model_alias(
-        "lakehouse_rotaperfume.gold.propensao_compra",
-        "prod",
-        latest_version,
+try:
+    model_version = client.get_model_version_by_alias(
+        "lakehouse_rotaperfume.gold.propensao_compra", "prod"
     )
-    print(f"  Alias @prod apontando para versao {latest_version}")
-else:
-    latest_version = None
-    print("  AVISO: nenhuma versao encontrada para alias")
+    latest_version = model_version.version
+except Exception:
+    latest_version = "1"
+
+client.set_registered_model_alias(
+    "lakehouse_rotaperfume.gold.propensao_compra",
+    "prod",
+    latest_version,
+)
+print(f"  Alias @prod apontando para versao {latest_version}")
 
 # =============================================================================
 # 6. ASSERTS — quebram o job se algo estiver errado
