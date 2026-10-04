@@ -1,0 +1,53 @@
+# Databricks Asset Bundle — rotaperfume
+# Liga o código local ao workspace: deploy, jobs e pipelines.
+bundle:
+  name: rotaperfume
+  uuid: 42c1a9e0-7f3d-4b2a-8c6e-1d4f0a9b3c7e
+
+include:
+  - resources/*.yml
+
+# O pipeline de notebooks não precisa de wheel Python. O package
+# rotaperfume será adicionado futuramente quando houver tasks
+# python_wheel_task (prompt 01 só usa notebook_task).
+
+# Variáveis compartilhadas por todos os recursos.
+# Podem ser sobrescritas por target ou por linha de comando.
+variables:
+  catalog:
+    description: Nome do catálogo Unity Catalog
+    default: lakehouse_rotaperfume
+  warehouse_id:
+    description: ID do SQL Warehouse Serverless Starter
+    default: dd1ddc0694a86a8e
+
+targets:
+  dev:
+    default: true
+    workspace:
+      host: https://dbc-ad7f18c2-8e19.cloud.databricks.com
+    variables:
+      catalog: lakehouse_rotaperfume
+      warehouse_id: dd1ddc0694a86a8e
+    # ⚠  ARMADILHA CRÍTICA — leia antes de mudar!
+    #
+    # NO target dev NÃO USE `mode: development`.
+    #
+    # `mode: development` faz o bundle prefixar TODOS os nomes de recurso com
+    # "[dev seu_usuario]". Para jobs e pipelines isso é inofensivo, mas para
+    # SCHEMAS do Unity Catalog isso gera nomes como `dev_fulano_bronze`,
+    # `dev_fulano_silver`, `dev_fulano_gold` — e todo o SQL da noite quebra,
+    # porque o catálogo foi criado como `lakehouse_rotaperfume`, não
+    # `dev_fulano_lakehouse_rotaperfume`.
+    #
+    # A solução correta em Free Edition / Serverless é pausar apenas o
+    # agendamento dos jobs via `schedule.pause_status: PAUSED` nos recursos.
+    # O job só roda via `databricks bundle run`, nunca sozinho.
+
+  prod:
+    workspace:
+      host: https://dbc-ad7f18c2-8e19.cloud.databricks.com
+      root_path: /Workspace/Users/${workspace.current_user.userName}/bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalog: lakehouse_rotaperfume
+      warehouse_id: dd1ddc0694a86a8e

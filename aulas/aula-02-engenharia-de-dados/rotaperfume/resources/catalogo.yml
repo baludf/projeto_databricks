@@ -1,0 +1,31 @@
+# =============================================================================
+# resources/catalogo.yml
+# Schemas (bronze/silver/gold) e volume managed (bronze.raw) do catálogo
+# rotaperfume. O CATÁLOGO em si é criado pelo scripts/criar-catalogo.sh
+# (ver comentário no databricks.yml — Free Edition + Default Storage).
+# =============================================================================
+
+resources:
+  schemas:
+    bronze:
+      catalog_name: lakehouse_rotaperfume
+      name: bronze
+      comment: "Camada bronze — espelho byte a byte do Volume raw. Tabelas de controle e staging."
+
+    silver:
+      catalog_name: lakehouse_rotaperfume
+      name: silver
+      comment: "Camada silver — dados limpos, deduplicados, com tipos corrigidos e regras de negócio aplicadas."
+
+    gold:
+      catalog_name: lakehouse_rotaperfume
+      name: gold
+      comment: "Camada gold — métricas, KPIs e agregados prontos para consumo por BI e Genie."
+
+  volumes:
+    bronze_raw:
+      catalog_name: lakehouse_rotaperfume
+      schema_name: bronze
+      name: raw
+      volume_type: MANAGED
+      comment: "Volume raw — recebe os CSVs do ERP e do CRM. Bronze lê daqui, mas o Volume é byte a byte idêntico ao que entrou."

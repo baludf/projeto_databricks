@@ -1,0 +1,20 @@
+# =============================================================================
+# resources/dashboard.dashboard.yml
+# AI/BI dashboard "Comercial · Rotaperfume" como recurso do bundle.
+#
+# Sobe junto no `databricks bundle deploy`. Tem diff, tem rollback e pode
+# ser apagado/recriado sem perda — JSON versionado no Git.
+#
+# Por que arquivo .lvdash.json separado: o Databricks aceita dashboard inline
+# em `serialized_dashboard`, mas para Manutenção (diff, PR, code review)
+# é melhor ter o JSON em arquivo proprio e referencia-lo via file_path.
+# =============================================================================
+
+resources:
+  dashboards:
+    comercial_rotaperfume:
+      display_name: "Comercial · Rotaperfume"
+      file_path: ../resources/dashboard-comercial.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: gold
